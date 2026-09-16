@@ -2,18 +2,22 @@
 
 A simple REST API built with **FastAPI**, **SQLModel**, and **PostgreSQL** for managing campaigns.
 
-The project demonstrates the fundamentals of building a database-backed CRUD API with request validation, dependency injection, SQLModel sessions, and automatic API documentation.
+The project demonstrates the fundamentals of building a database-backed CRUD API with request validation, dependency injection, SQLModel sessions, environment-based configuration, and automatic API documentation.
+
+The application is also **containerized with Docker and Docker Compose**, with FastAPI and PostgreSQL running as separate services.
 
 ## Tech Stack
 
-* **Python 3.12.14**
+* **Python 3.12**
 * **FastAPI**
 * **SQLModel**
-* **PostgreSQL**
+* **PostgreSQL 18**
 * **Pydantic**
-* **psycopg**
+* **psycopg2**
 * **python-dotenv**
 * **uv** for dependency management
+* **Docker**
+* **Docker Compose**
 
 ## Features
 
@@ -24,9 +28,36 @@ The project demonstrates the fundamentals of building a database-backed CRUD API
 * Delete campaigns
 * PostgreSQL persistence
 * Pydantic/SQLModel request validation
+* Dependency injection for database sessions
 * Automatic database table creation
 * Automatic seed data for development
 * Interactive Swagger API documentation
+* Dockerized FastAPI application
+* Dockerized PostgreSQL database
+* Environment-based configuration
+
+## Architecture
+
+The application runs as two Docker Compose services:
+
+```text
+                 Docker Compose
+                      │
+          ┌───────────┴───────────┐
+          │                       │
+     FastAPI API             PostgreSQL
+     api:8000                  db:5432
+          │                       │
+          └────── SQLModel ───────┘
+```
+
+The FastAPI container connects to PostgreSQL using the Docker Compose service name:
+
+```text
+POSTGRES_HOST=db
+```
+
+The PostgreSQL data is persisted using a Docker named volume.
 
 ## Project Structure
 
@@ -35,11 +66,17 @@ FastAPI-CRUD/
 ├── main.py
 ├── pyproject.toml
 ├── uv.lock
+├── Dockerfile
+├── docker-compose.yml
+├── .dockerignore
 ├── .env.example
-└── .gitignore
+├── .gitignore
+└── README.md
 ```
 
-## Setup
+## Setup with Docker
+
+Docker Compose is the recommended way to run the complete application.
 
 ### 1. Clone the repository
 
@@ -48,15 +85,7 @@ git clone https://github.com/Harshit-077/FastAPI-CRUD.git
 cd FastAPI-CRUD
 ```
 
-### 2. Install dependencies
-
-This project uses `uv` for dependency management.
-
-```bash
-uv sync
-```
-
-### 3. Configure environment variables
+### 2. Configure environment variables
 
 Create a `.env` file from the example:
 
@@ -64,21 +93,76 @@ Create a `.env` file from the example:
 cp .env.example .env
 ```
 
-Update the PostgreSQL credentials in `.env`.
+Update the PostgreSQL credentials if required.
 
-### 4. Create the PostgreSQL database
+For Docker Compose, the database host should be:
 
-Make sure PostgreSQL is running and create the database specified by `POSTGRES_DB`.
-
-For example:
-
-```sql
-CREATE DATABASE fastapi_crud;
+```text
+POSTGRES_HOST=db
 ```
 
-The application creates the required `campaign` table automatically when it starts.
+### 3. Start the application
 
-### 5. Start the server
+Build the API image and start both services:
+
+```bash
+docker compose up --build
+```
+
+This starts:
+
+* FastAPI API
+* PostgreSQL database
+
+The API will be available at:
+
+```text
+http://127.0.0.1:8000
+```
+
+To stop the application:
+
+```bash
+docker compose down
+```
+
+To stop the application and remove the development database volume:
+
+```bash
+docker compose down -v
+```
+
+> `docker compose down -v` deletes the PostgreSQL data stored in the Docker volume. Use it only when you are okay with resetting the development database.
+
+## Local Development Without Docker
+
+Docker is recommended for running the complete application, but the API can also be run locally.
+
+### 1. Install dependencies
+
+This project uses `uv` for dependency management.
+
+```bash
+uv sync
+```
+
+### 2. Configure environment variables
+
+Create a `.env` file:
+
+```bash
+cp .env.example .env
+```
+
+For a locally running PostgreSQL server, configure the host accordingly:
+
+```text
+POSTGRES_HOST=localhost
+```
+
+Make sure the PostgreSQL database specified by `POSTGRES_DB` already exists.
+
+### 3. Start the server
 
 ```bash
 uv run fastapi dev main.py
@@ -193,7 +277,7 @@ At application startup:
 2. SQLModel creates the required tables if they do not already exist.
 3. Development seed campaigns are inserted if the `campaign` table is empty.
 
-The application currently uses the following database configuration:
+The application uses the following database configuration:
 
 ```text
 POSTGRES_USER
@@ -203,9 +287,31 @@ POSTGRES_PORT
 POSTGRES_DB
 ```
 
+When using Docker Compose:
+
+```text
+POSTGRES_HOST=db
+```
+
+When running PostgreSQL directly on the host machine:
+
+```text
+POSTGRES_HOST=localhost
+```
+
 ## Environment Variables
 
 See [`.env.example`](.env.example) for the required configuration.
+
+Example:
+
+```env
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=your_password
+POSTGRES_HOST=db
+POSTGRES_PORT=5432
+POSTGRES_DB=fastapi_crud
+```
 
 **Never commit your actual `.env` file or database credentials to Git.**
 
@@ -231,6 +337,8 @@ This project was built to practice:
 * PostgreSQL integration
 * CRUD operations
 * Environment-based configuration
+* Docker and Docker Compose
+* Containerized database development
 * API documentation with OpenAPI/Swagger
 
 ## License
