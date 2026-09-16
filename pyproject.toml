@@ -6,6 +6,7 @@ dependencies = [
     "fastapi[standard]>=0.141.1",
     "psycopg2-binary>=2.9.13",
     "psycopg[binary]>=3.3.5",
+    "pydantic>=2.13.5",
     "python-dotenv>=1.2.3",
     "sqlmodel>=0.0.42",
 ]
